@@ -165,7 +165,10 @@ float Souliss_LastIn_GetAnalog(U8 *memory_map, U8 id, U8 slot);
 #	if(WEBCONFIGSERVER)
 #		include "interfaces/mcu_esp32/webconfig/webconfig.h"
 #	endif
+#endif
 
+#if(MQTT_INTERFACE)
+#		include "interfaces/MQTT_Interface.h"
 #endif
 
 // Include IO definitions and other tools
@@ -209,6 +212,10 @@ float Souliss_LastIn_GetAnalog(U8 *memory_map, U8 id, U8 slot);
 	#if(WEBCONFIGSERVER)
 	#	include "interfaces/mcu_esp32/webconfig/webconfig.cpp"
 	#endif
+#endif
+
+#if(MQTT_INTERFACE) //TODO CHECK NETWORK REQUIREMENTS
+#		include "interfaces/MQTT_Interface.cpp"
 #endif
 
 

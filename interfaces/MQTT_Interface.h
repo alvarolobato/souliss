@@ -22,36 +22,37 @@
     \file 
     \ingroup
 */
-#ifndef XMLSERVER_H
-#define XMLSERVER_H
+#ifndef MQTT_Interface_H
+#define MQTT_Interface_H
+
+#include "Client.h"
+#include <PubSubClient.h>
 
 #include "GetConfig.h"						// need : ethUsrCfg.h, vNetCfg.h, SoulissCfg.h
 
 // XML over TCP/HTTP	(polling)
-#define HTTPPORT		80					// Listening for WebServer
-#define	HTTP_REQBYTES	50					// Max length for URL request
-#define HTTP_BUFBYTES	(20+12*MaCaco_SLOT)	// Max length for data buffer
+//#define HTTPPORT		80					// Listening for WebServer
+//#define	HTTP_REQBYTES	50					// Max length for URL request
+//#define HTTP_BUFBYTES	(20+12*MaCaco_SLOT)	// Max length for data buffer
+#define MQTT_BUFBYTES1 30
+#define MQTT_BUFBYTES2 10
 
-#define NULLID			0xFF				// This ID value is assumed as Null
+//#define NULLID			0xFF				// This ID value is assumed as Null
 
-#define	MAXVALUES		5					// Number of values into a single URL, comma separated
+//#define	MAXVALUES		5					// Number of values into a single URL, comma separated
 
-typedef struct
+/*typedef struct
 {
 	U16	address;							// Node Address
 	U8  slot;								// Node Slot
 } CommandBufferHeader;
+*/
 
-#define XMLSERVER_LOG LOG.print
-
-#if(1 ) //XMLSERVER && VNET_MEDIA1_ENABLE && ( ETH_W5100 || ETH_W5200 || ETH_W5500 || ETH_ENC28J60)
-void XMLSERVERInit(U8 *memory_map);
-void XMLSERVERInterface(U8 *memory_map);
+#define MQTTI_LOG LOG.print
+ 
+#if(MQTT_INTERFACE && VNET_MEDIA1_ENABLE) //&& ( ETH_W5100 || ETH_W5200 || ETH_W5500 || ETH_ENC28J60)
+    void MQTT_InterfaceInit(U8 *memory_map,const char* server, uint16_t port, Client& client);
+    void MQTT_InterfaceProcess(U8 *memory_map);
 #endif
-
-// Get back compatibility with previous APIs
-#define openHABInit XMLSERVERInit
-#define openHABInterface XMLSERVERInterface
-
 
 #endif

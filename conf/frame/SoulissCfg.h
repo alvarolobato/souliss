@@ -116,6 +116,36 @@
 #	define WEBCONFIGSERVER			0
 #endif
 
+
+
+/**************************************************************************/
+/*!
+	TODO 
+	The XML Server is an TCP server listening for HTTP URLs and 
+	enable data transfer using a XML string.
+	
+	Enabled in TCP mode, the node can be polled using a standard HTTP URL
+	(connection in TCP on port 80) this allow data forcing and retrieving.
+	
+	Data are available in XML format.
+	
+	The XML Server is supported only for Ethernet based nodes equipped with
+	Wiznet W5100/W5200/W5500 controller.
+	
+        Value       
+        0x0         Disable (Default)
+        0x1         Enable in TCP (Polling)
+
+	This is supported on AVR only.
+*/
+/**************************************************************************/
+#ifndef MQTT_INTERFACE_INSKETCH
+#	define	MQTT_INTERFACE  			0
+#endif
+
+#ifndef MQTTI_DEBUG_INSKETCH
+#	define	MQTTI_DEBUG  			0
+#endif
 	
 /**************************************************************************/
 /*!
