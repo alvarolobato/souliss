@@ -1217,9 +1217,11 @@ U8 Souliss_Logic_T19(U8 *memory_map, U8 slot, U8 *trigger)
 		// Set to ON state (if it wasn't already)
 		memory_map[MaCaco_OUT_s + slot] = Souliss_T1n_OnCoil;
 
-		// DO NOT reset command here - let DigKeepHold send continuous BrightUp while held
-		// The input will be reset naturally when button is released
-		// memory_map[MaCaco_IN_s + slot] = Souliss_T1n_RstCmd;
+		// Reset command so the next BrightUp is set by ProcessInputSingle on the next input poll
+		// while the button is still held. When released, ProcessInputSingle stops writing BrightUp
+		// and dimming stops cleanly. Without this reset, BrightUp stays in memory_map forever
+		// after release and loop2 triggers it in a tight loop indefinitely.
+		memory_map[MaCaco_IN_s + slot] = Souliss_T1n_RstCmd;
 
 		i_trigger = Souliss_TRIGGED;
 	}
