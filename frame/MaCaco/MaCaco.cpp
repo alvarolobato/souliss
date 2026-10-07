@@ -328,8 +328,10 @@ U8 MaCacoUserMode_send(U16 addr, U8 funcode, U16 putin, U8 startoffset, U8 numbe
 	return status;
 }
 
-#define MaCaco_TYPCLASS_T1n		0x10			// Class of the T1n typicals (Typicals.h)
+// Typical codes, kept equal to Souliss_T1n, Souliss_T1A and Souliss_TRL in base/Typicals.h
+#define MaCaco_TYPCLASS_T1n		0x10			// Class of the T1n typicals
 #define MaCaco_TYP_T1A			0x1A			// Digital pass through, its input slot holds a value
+#define MaCaco_TYP_TRL			0xFF			// Related slot, holds data of the typical before it
 
 /**************************************************************************/
 /*!
@@ -343,25 +345,41 @@ U8 MaCacoUserMode_send(U16 addr, U8 funcode, U16 putin, U8 startoffset, U8 numbe
 	input slot, and ended up neither on nor off.
 
 	A zero addressed to the input slot of a T1n typical is skipped, there it
-	only means "no command". Everything else is copied as before: related
-	slots (TRL) carry data like a brightness or a colour where zero is a
-	value, the T1A passes its input through, and the typicals of the other
-	classes keep setpoints in their input slots.
+	only means "no command". The zeros for its related slots (TRL) are then
+	skipped as well: they hold the brightness or the colour of a command that
+	may still be waiting, and a Set left with its data zeroed would switch the
+	light on at brightness zero.
+
+	Everything else is copied as before. A related slot is written, zero
+	included, when the frame carries a command for its typical or starts at
+	the related slot itself; the T1A passes its input through, and the
+	typicals of the other classes keep setpoints in their input slots.
+
+	A T1n input can therefore no longer be cleared from remote with a zero
+	(T12 automatic mode, Flash and BrightSwitch of the dimmers); send the
+	command that ends it instead.
 */
 /**************************************************************************/
-void MaCaco_forcewrite(U8 *memory_map, U16 startoffset, U8 *data, U8 numberof)
+static void MaCaco_forcewrite(U8 *memory_map, U16 startoffset, U8 *data, U8 numberof)
 {
+	U8 skipped = 0;				// The empty command of a T1n was skipped, its related slots follow
+
 	for(U8 i=0; i<numberof; i++)
 	{
 		U16 offset = startoffset + i;
 
-		if((data[i] == 0) && (offset >= MaCaco_IN_s) && (offset <= MaCaco_IN_f))
+		if((offset >= MaCaco_IN_s) && (offset <= MaCaco_IN_f))
 		{
 			U8 typ = memory_map[MaCaco_TYP_s + (offset - MaCaco_IN_s)];
 
-			if(((typ & 0xF0) == MaCaco_TYPCLASS_T1n) && (typ != MaCaco_TYP_T1A))
+			if(typ != MaCaco_TYP_TRL)
+				skipped = (data[i] == 0) && ((typ & 0xF0) == MaCaco_TYPCLASS_T1n) && (typ != MaCaco_TYP_T1A);
+
+			if(skipped && (data[i] == 0))
 				continue;
 		}
+		else
+			skipped = 0;
 
 		memory_map[offset] = data[i];
 	}
