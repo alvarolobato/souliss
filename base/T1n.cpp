@@ -1120,6 +1120,8 @@ U8 Souliss_Logic_T19(U8 *memory_map, U8 slot, U8 *trigger)
 			i_trigger = Souliss_TRIGGED;								// Trig the change
 			memory_map[MaCaco_IN_s + slot]    = Souliss_T1n_RstCmd;		// Reset
 		}
+		else if(memory_map[MaCaco_OUT_s + slot] == Souliss_T1n_OffCoil && memory_map[MaCaco_OUT_s + slot + 1]==0)
+			memory_map[MaCaco_IN_s + slot]    = Souliss_T1n_RstCmd;		// Already off, nothing to fade: reset
 	}
 	else if (memory_map[MaCaco_IN_s + slot] == Souliss_T1n_OnCmd)
 	{
