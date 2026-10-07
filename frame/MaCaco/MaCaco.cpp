@@ -328,6 +328,45 @@ U8 MaCacoUserMode_send(U16 addr, U8 funcode, U16 putin, U8 startoffset, U8 numbe
 	return status;
 }
 
+#define MaCaco_TYPCLASS_T1n		0x10			// Class of the T1n typicals (Typicals.h)
+#define MaCaco_TYP_T1A			0x1A			// Digital pass through, its input slot holds a value
+
+/**************************************************************************/
+/*!
+    Copy the payload of a force request into the shared memory map
+
+	A user interface builds a force frame from slot 0 up to the slot that it
+	wants to command and leaves every other byte at zero, so a plain copy also
+	writes "no command" over the input of every lower slot. A typical that
+	needs its command for more than one cycle is then stopped half way: the
+	T19 fades one step per cycle while the ON or OFF command stays in its
+	input slot, and ended up neither on nor off.
+
+	A zero addressed to the input slot of a T1n typical is skipped, there it
+	only means "no command". Everything else is copied as before: related
+	slots (TRL) carry data like a brightness or a colour where zero is a
+	value, the T1A passes its input through, and the typicals of the other
+	classes keep setpoints in their input slots.
+*/
+/**************************************************************************/
+void MaCaco_forcewrite(U8 *memory_map, U16 startoffset, U8 *data, U8 numberof)
+{
+	for(U8 i=0; i<numberof; i++)
+	{
+		U16 offset = startoffset + i;
+
+		if((data[i] == 0) && (offset >= MaCaco_IN_s) && (offset <= MaCaco_IN_f))
+		{
+			U8 typ = memory_map[MaCaco_TYP_s + (offset - MaCaco_IN_s)];
+
+			if(((typ & 0xF0) == MaCaco_TYPCLASS_T1n) && (typ != MaCaco_TYP_T1A))
+				continue;
+		}
+
+		memory_map[offset] = data[i];
+	}
+}
+
 /**************************************************************************/
 /*!
     Analyze received data, send answer and move data to shared memory map
@@ -890,8 +929,7 @@ U8 MaCaco_peruse(U16 addr, MaCaco_rx_data_t *rx, U8 *memory_map)
 		// force register operation
 		case(MaCaco_FORCEREGSTR) :
 		
-			memory_map += rx->startoffset;
-			memmove(memory_map, rx->data, rx->numberof);
+			MaCaco_forcewrite(memory_map, rx->startoffset, rx->data, rx->numberof);
 			return MaCaco_FUNCODE_OK;
 		
 		break;
@@ -931,8 +969,7 @@ U8 MaCaco_peruse(U16 addr, MaCaco_rx_data_t *rx, U8 *memory_map)
 			
 			if(rx->startoffset == MaCaco_LOCNODE)
 			{
-				memory_map += MaCaco_IN_s;
-				memmove(memory_map, rx->data, rx->numberof);
+				MaCaco_forcewrite(memory_map, MaCaco_IN_s, rx->data, rx->numberof);
 				return MaCaco_FUNCODE_OK;
 			}
 			else	// Data shall be sent to a remote node
